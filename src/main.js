@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import GUI from 'lil-gui';
 
-const defaultVideo = '/assets/candle.mp4';
+const scriptOrigin =
+  typeof document !== 'undefined' && document.currentScript && document.currentScript.src
+    ? new URL(document.currentScript.src).origin
+    : window.location.origin;
+const defaultVideo = `${scriptOrigin}/assets/candle.mp4`;
 
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-dither]').forEach(container => {
