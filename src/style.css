@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: #E8E2DA;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+video {
+  display: none;
+}
+
+.lil-gui {
+  --background-color: #1a1a1a;
+  --text-color: #e8e2da;
+  --title-background-color: #0e0e0e;
+  --widget-color: #2a2a2a;
+  --hover-color: #333;
+  --focus-color: #444;
+  --number-color: #ff3000;
+  --string-color: #e8c87a;
+  --font-size: 11px;
+}
+
