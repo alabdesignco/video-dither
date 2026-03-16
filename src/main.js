@@ -1,37 +1,55 @@
 import * as THREE from 'three';
 import GUI from 'lil-gui';
-import './style.css';
 
-const canvas = document.getElementById('c');
-const vid = document.getElementById('vid');
+const defaultVideo = '/assets/candle.mp4';
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-dither]').forEach(container => {
+    const canvas = document.createElement('canvas');
+    const vid = document.createElement('video');
 
-const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-let fpsAcc = 0;
-let fpsFrames = 0;
-let fpsLast = performance.now();
-let fpsValue = 0;
-let renderLast = 0;
-let lastRenderT = 0;
+    vid.autoplay = true;
+    vid.loop = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.crossOrigin = 'anonymous';
+    vid.src = defaultVideo;
 
-const videoTex = new THREE.VideoTexture(vid);
-videoTex.minFilter = THREE.LinearFilter;
-videoTex.magFilter = THREE.LinearFilter;
-videoTex.flipY = false;
+    container.style.overflow = 'hidden';
+    vid.style.display = 'none';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
 
-const vert = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = vec4(position, 1.0);
-  }
-`;
+    container.appendChild(vid);
+    container.appendChild(canvas);
 
-const frag = `
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    let fpsAcc = 0;
+    let fpsFrames = 0;
+    let fpsLast = performance.now();
+    let fpsValue = 0;
+    let renderLast = 0;
+    let lastRenderT = 0;
+
+    const videoTex = new THREE.VideoTexture(vid);
+    videoTex.minFilter = THREE.LinearFilter;
+    videoTex.magFilter = THREE.LinearFilter;
+    videoTex.flipY = false;
+
+    const vert = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `;
+
+    const frag = `
   precision highp float;
 
   uniform sampler2D uVideo;
@@ -145,205 +163,216 @@ const frag = `
   }
 `;
 
-const mat = new THREE.ShaderMaterial({
-  vertexShader: vert,
-  fragmentShader: frag,
-  uniforms: {
-    uVideo: { value: videoTex },
-    uTime: { value: 0 },
-    uColorDark: { value: new THREE.Color('#0E0E0E') },
-    uColorLight: { value: new THREE.Color('#E8E2DA') },
-    uBias: { value: 0.08 },
-    uNoiseScale: { value: 1.4 },
-    uNoiseSpeed: { value: 0.3 },
-    uNoiseWeight: { value: 0.77 },
-    uPulseSpeed: { value: 3.1 },
-    uPulseWeight: { value: 0.87 },
-    uAnimStrength: { value: 0.22 },
-    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-    uMouseInfluence: { value: 0 },
-    uRippleRadius: { value: 0.35 },
-    uRippleStrength: { value: 0.018 },
-    uRippleFreq: { value: 18.0 },
-    uRippleSpeed: { value: 4.0 },
-    uAspect: { value: window.innerWidth / window.innerHeight },
-    uVideoRatio: { value: 1.0 },
-    uIdleSway: { value: 0.006 },
-    uIdleSpeed: { value: 1.8 },
-    uZoom: { value: 1.0 }
-  }
-});
+    const mat = new THREE.ShaderMaterial({
+      vertexShader: vert,
+      fragmentShader: frag,
+      uniforms: {
+        uVideo: { value: videoTex },
+        uTime: { value: 0 },
+        uColorDark: { value: new THREE.Color('#0E0E0E') },
+        uColorLight: { value: new THREE.Color('#E8E2DA') },
+        uBias: { value: 0.08 },
+        uNoiseScale: { value: 1.4 },
+        uNoiseSpeed: { value: 0.3 },
+        uNoiseWeight: { value: 0.77 },
+        uPulseSpeed: { value: 3.1 },
+        uPulseWeight: { value: 0.87 },
+        uAnimStrength: { value: 0.22 },
+        uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+        uMouseInfluence: { value: 0 },
+        uRippleRadius: { value: 0.35 },
+        uRippleStrength: { value: 0.018 },
+        uRippleFreq: { value: 18.0 },
+        uRippleSpeed: { value: 4.0 },
+        uAspect: { value: 1 },
+        uVideoRatio: { value: 1.0 },
+        uIdleSway: { value: 0.006 },
+        uIdleSpeed: { value: 1.8 },
+        uZoom: { value: 1.0 }
+      }
+    });
 
-scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
+    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
 
-let mouseTarget = new THREE.Vector2(0.5, 0.5);
-let mouseCurrent = new THREE.Vector2(0.5, 0.5);
-let mouseInfluenceTarget = 0;
+    let mouseTarget = new THREE.Vector2(0.5, 0.5);
+    let mouseCurrent = new THREE.Vector2(0.5, 0.5);
+    let mouseInfluenceTarget = 0;
 
-const hasPointer = window.matchMedia('(pointer: fine)').matches;
+    const hasPointer = window.matchMedia('(pointer: fine)').matches;
 
-if (hasPointer) {
-  window.addEventListener('pointermove', e => {
-    mouseTarget.set(
-      e.clientX / window.innerWidth,
-      1 - e.clientY / window.innerHeight
-    );
-    mouseInfluenceTarget = 1;
-  });
+    if (hasPointer) {
+      window.addEventListener('pointermove', e => {
+        const r = container.getBoundingClientRect();
+        mouseTarget.set(
+          (e.clientX - r.left) / r.width,
+          1 - (e.clientY - r.top) / r.height
+        );
+        mouseInfluenceTarget = 1;
+      });
 
-  document.addEventListener('pointerleave', () => {
-    mouseInfluenceTarget = 0;
-  });
-}
-
-const params = {
-  fps: '0.0',
-  scale: '1.00',
-  targetFps: 24,
-  bias: 0.08,
-  noiseScale: 1.4,
-  noiseSpeed: 0.3,
-  noiseWeight: 0.77,
-  pulseSpeed: 3.1,
-  pulseWeight: 0.87,
-  animStrength: 0.22,
-  rippleRadius: 0.35,
-  rippleStrength: 0.018,
-  rippleFreq: 18.0,
-  rippleSpeed: 4.0,
-  idleSway: 0.006,
-  idleSpeed: 1.8,
-  zoom: 1.0,
-  colorDark: '#0E0E0E',
-  colorLight: '#E8E2DA'
-};
-
-const gui = new GUI({ title: 'Dither Controls' });
-const fP = gui.addFolder('Perf');
-const fpsController = fP.add(params, 'fps').name('FPS').listen();
-const scaleController = fP.add(params, 'scale').name('Scale').listen();
-fP.add(params, 'targetFps', [0, 15, 24, 30, 45, 60]).name('Cap FPS');
-fpsController.disable();
-scaleController.disable();
-gui.hide();
-
-const fD = gui.addFolder('Dither');
-fD.add(params, 'bias', 0, 0.5, 0.001).name('Bias').onChange(v => {
-  mat.uniforms.uBias.value = v;
-});
-
-const fB = gui.addFolder('Breathing');
-fB.add(params, 'noiseScale', 0.1, 5, 0.01).name('Noise Scale').onChange(v => {
-  mat.uniforms.uNoiseScale.value = v;
-});
-fB.add(params, 'noiseSpeed', 0, 2, 0.01).name('Noise Speed').onChange(v => {
-  mat.uniforms.uNoiseSpeed.value = v;
-});
-fB.add(params, 'noiseWeight', 0, 1, 0.01).name('Noise Weight').onChange(v => {
-  mat.uniforms.uNoiseWeight.value = v;
-});
-fB.add(params, 'pulseSpeed', 0, 10, 0.1).name('Pulse Speed').onChange(v => {
-  mat.uniforms.uPulseSpeed.value = v;
-});
-fB.add(params, 'pulseWeight', 0, 1, 0.01).name('Pulse Weight').onChange(v => {
-  mat.uniforms.uPulseWeight.value = v;
-});
-fB.add(params, 'animStrength', 0, 1, 0.01).name('Anim Strength').onChange(v => {
-  mat.uniforms.uAnimStrength.value = v;
-});
-
-const fS = gui.addFolder('Ripple');
-fS.add(params, 'idleSway', 0, 0.05, 0.001).name('Idle Sway').onChange(v => {
-  mat.uniforms.uIdleSway.value = v;
-});
-fS.add(params, 'idleSpeed', 0, 5, 0.1).name('Idle Speed').onChange(v => {
-  mat.uniforms.uIdleSpeed.value = v;
-});
-fS.add(params, 'rippleRadius', 0, 1, 0.01).name('Radius').onChange(v => {
-  mat.uniforms.uRippleRadius.value = v;
-});
-fS.add(params, 'rippleStrength', 0, 0.1, 0.001).name('Strength').onChange(v => {
-  mat.uniforms.uRippleStrength.value = v;
-});
-fS.add(params, 'rippleFreq', 1, 40, 0.5).name('Ring Frequency').onChange(v => {
-  mat.uniforms.uRippleFreq.value = v;
-});
-fS.add(params, 'rippleSpeed', 0, 15, 0.1).name('Ring Speed').onChange(v => {
-  mat.uniforms.uRippleSpeed.value = v;
-});
-
-fS.add(params, 'zoom', 0.5, 1.5, 0.01).name('Zoom').onChange(v => {
-  mat.uniforms.uZoom.value = v;
-});
-
-const fC = gui.addFolder('Colors');
-fC.addColor(params, 'colorDark').name('Ink').onChange(v => {
-  mat.uniforms.uColorDark.value.set(v);
-});
-fC.addColor(params, 'colorLight').name('Background').onChange(v => {
-  mat.uniforms.uColorLight.value.set(v);
-  document.body.style.background = v;
-});
-
-gui.add(
-  {
-    log() {
-      console.log(JSON.stringify(params, null, 2));
+      container.addEventListener('pointerleave', () => {
+        mouseInfluenceTarget = 0;
+      });
     }
-  },
-  'log'
-).name('📋 Log values');
 
-window.addEventListener('resize', () => {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  mat.uniforms.uAspect.value = window.innerWidth / window.innerHeight;
+    const perf = {
+      fps: '0.0',
+      scale: '1.00',
+      targetFps: 24
+    };
+
+    const params = {
+      bias: 0.08,
+      noiseScale: 1.4,
+      noiseSpeed: 0.3,
+      noiseWeight: 0.77,
+      pulseSpeed: 3.1,
+      pulseWeight: 0.87,
+      animStrength: 0.22,
+      rippleRadius: 0.35,
+      rippleStrength: 0.018,
+      rippleFreq: 18.0,
+      rippleSpeed: 4.0,
+      idleSway: 0.006,
+      idleSpeed: 1.8,
+      zoom: 1.0,
+      colorDark: '#0E0E0E',
+      colorLight: '#E8E2DA'
+    };
+
+    const gui = new GUI({ title: 'Dither Controls' });
+    const fP = gui.addFolder('Perf');
+    const fpsController = fP.add(perf, 'fps').name('FPS').listen();
+    const scaleController = fP.add(perf, 'scale').name('Scale').listen();
+    fP.add(perf, 'targetFps', [0, 15, 24, 30, 45, 60]).name('Cap FPS');
+    fpsController.disable();
+    scaleController.disable();
+    gui.hide();
+
+    const fD = gui.addFolder('Dither');
+    fD.add(params, 'bias', 0, 0.5, 0.001).name('Bias').onChange(v => {
+      mat.uniforms.uBias.value = v;
+    });
+
+    const fB = gui.addFolder('Breathing');
+    fB.add(params, 'noiseScale', 0.1, 5, 0.01).name('Noise Scale').onChange(v => {
+      mat.uniforms.uNoiseScale.value = v;
+    });
+    fB.add(params, 'noiseSpeed', 0, 2, 0.01).name('Noise Speed').onChange(v => {
+      mat.uniforms.uNoiseSpeed.value = v;
+    });
+    fB.add(params, 'noiseWeight', 0, 1, 0.01).name('Noise Weight').onChange(v => {
+      mat.uniforms.uNoiseWeight.value = v;
+    });
+    fB.add(params, 'pulseSpeed', 0, 10, 0.1).name('Pulse Speed').onChange(v => {
+      mat.uniforms.uPulseSpeed.value = v;
+    });
+    fB.add(params, 'pulseWeight', 0, 1, 0.01).name('Pulse Weight').onChange(v => {
+      mat.uniforms.uPulseWeight.value = v;
+    });
+    fB.add(params, 'animStrength', 0, 1, 0.01).name('Anim Strength').onChange(v => {
+      mat.uniforms.uAnimStrength.value = v;
+    });
+
+    const fS = gui.addFolder('Ripple');
+    fS.add(params, 'idleSway', 0, 0.05, 0.001).name('Idle Sway').onChange(v => {
+      mat.uniforms.uIdleSway.value = v;
+    });
+    fS.add(params, 'idleSpeed', 0, 5, 0.1).name('Idle Speed').onChange(v => {
+      mat.uniforms.uIdleSpeed.value = v;
+    });
+    fS.add(params, 'rippleRadius', 0, 1, 0.01).name('Radius').onChange(v => {
+      mat.uniforms.uRippleRadius.value = v;
+    });
+    fS.add(params, 'rippleStrength', 0, 0.1, 0.001).name('Strength').onChange(v => {
+      mat.uniforms.uRippleStrength.value = v;
+    });
+    fS.add(params, 'rippleFreq', 1, 40, 0.5).name('Ring Frequency').onChange(v => {
+      mat.uniforms.uRippleFreq.value = v;
+    });
+    fS.add(params, 'rippleSpeed', 0, 15, 0.1).name('Ring Speed').onChange(v => {
+      mat.uniforms.uRippleSpeed.value = v;
+    });
+
+    fS.add(params, 'zoom', 0.5, 1.5, 0.01).name('Zoom').onChange(v => {
+      mat.uniforms.uZoom.value = v;
+    });
+
+    const fC = gui.addFolder('Colors');
+    fC.addColor(params, 'colorDark').name('Ink').onChange(v => {
+      mat.uniforms.uColorDark.value.set(v);
+    });
+    fC.addColor(params, 'colorLight').name('Background').onChange(v => {
+      mat.uniforms.uColorLight.value.set(v);
+      container.style.background = v;
+    });
+
+    gui.add(
+      {
+        log() {
+          console.log(JSON.stringify({ perf, params }, null, 2));
+        }
+      },
+      'log'
+    ).name('📋 Log values');
+
+    const resize = () => {
+      const w = container.clientWidth || container.offsetWidth;
+      const h = container.clientHeight || container.offsetHeight || window.innerHeight;
+      renderer.setSize(w, h);
+      mat.uniforms.uAspect.value = w / h;
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    const animate = t => {
+      requestAnimationFrame(animate);
+      if (perf.targetFps) {
+        const minDelta = 1000 / perf.targetFps;
+        if (t - renderLast < minDelta) return;
+        renderLast = t - ((t - renderLast) % minDelta);
+      }
+      const dt = lastRenderT ? (t - lastRenderT) / 1000 : 0;
+      lastRenderT = t;
+      const time = t * 0.001;
+      mat.uniforms.uTime.value = time;
+
+      const mouseEase = 1 - Math.exp(-dt * 14);
+      mouseCurrent.lerp(mouseTarget, mouseEase);
+      mat.uniforms.uMouse.value.copy(mouseCurrent);
+
+      const inf = mat.uniforms.uMouseInfluence.value;
+      const influenceEase = 1 - Math.exp(-dt * 18);
+      mat.uniforms.uMouseInfluence.value += (mouseInfluenceTarget - inf) * influenceEase;
+
+      fpsFrames++;
+      fpsAcc += t - fpsLast;
+      if (fpsAcc >= 500) {
+        fpsValue = (fpsFrames * 1000) / fpsAcc;
+        fpsFrames = 0;
+        fpsAcc = 0;
+        perf.fps = fpsValue.toFixed(1);
+        perf.scale = renderer.getPixelRatio().toFixed(2);
+      }
+      fpsLast = t;
+
+      renderer.render(scene, camera);
+    };
+
+    vid.addEventListener('loadedmetadata', () => {
+      mat.uniforms.uVideoRatio.value = vid.videoWidth / vid.videoHeight;
+    });
+
+    vid.addEventListener(
+      'canplay',
+      () => {
+        requestAnimationFrame(animate);
+      },
+      { once: true }
+    );
+
+    vid.play().catch(() => {});
+  });
 });
-
-function animate(t) {
-  requestAnimationFrame(animate);
-  if (params.targetFps) {
-    const minDelta = 1000 / params.targetFps;
-    if (t - renderLast < minDelta) return;
-    renderLast = t - ((t - renderLast) % minDelta);
-  }
-  const dt = lastRenderT ? (t - lastRenderT) / 1000 : 0;
-  lastRenderT = t;
-  const time = t * 0.001;
-  mat.uniforms.uTime.value = time;
-
-  const mouseEase = 1 - Math.exp(-dt * 14);
-  mouseCurrent.lerp(mouseTarget, mouseEase);
-  mat.uniforms.uMouse.value.copy(mouseCurrent);
-
-  const inf = mat.uniforms.uMouseInfluence.value;
-  const influenceEase = 1 - Math.exp(-dt * 18);
-  mat.uniforms.uMouseInfluence.value += (mouseInfluenceTarget - inf) * influenceEase;
-
-  fpsFrames++;
-  fpsAcc += t - fpsLast;
-  if (fpsAcc >= 500) {
-    fpsValue = (fpsFrames * 1000) / fpsAcc;
-    fpsFrames = 0;
-    fpsAcc = 0;
-    params.fps = fpsValue.toFixed(1);
-    params.scale = renderer.getPixelRatio().toFixed(2);
-  }
-  fpsLast = t;
-
-  renderer.render(scene, camera);
-}
-
-vid.addEventListener('loadedmetadata', () => {
-  mat.uniforms.uVideoRatio.value = vid.videoWidth / vid.videoHeight;
-});
-
-vid.addEventListener(
-  'canplay',
-  () => {
-    requestAnimationFrame(animate);
-  },
-  { once: true }
-);
-
-vid.play().catch(() => {});
 
