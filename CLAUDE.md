@@ -1,14 +1,19 @@
 # dither-alab
 
-Standalone WebGL dither effect demo. Extracted from the `adc-refresh` project research into OCI Buzzworthy's Three.js implementation.
+Standalone WebGL dither effect demo.
 
 ## Project Structure
 
 ```
 dither-alab/
-├── index.html       — single-file demo, all shaders and JS inline
-└── efecto/
-    └── flame.mp4    — source video input
+├── index.html       — Vite entry HTML
+├── src/
+│   ├── main.js      — Three.js scene, shader, GUI
+│   └── style.css    — base layout and GUI styling
+├── assets/
+│   └── candle.mp4   — source video input
+├── vite.config.js   — Vite config
+└── package.json     — scripts and dependencies
 ```
 
 ## What It Does
@@ -63,7 +68,6 @@ Full-viewport dithered video renderer using vanilla Three.js (no framework, no b
 
 ## Reference
 
-- **Inspiration**: [OCI Buzzworthy](https://oci.madebybuzzworthy.com/) — full breakdown in `adc-refresh/research/oci-threejs-breakdown.md`
 - **Three.js**: `0.169.0` via CDN
 - **lil-gui**: `0.19` via CDN (debug GUI only, remove for production)
 
