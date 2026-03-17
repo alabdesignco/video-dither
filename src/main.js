@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.display = 'block';
+    canvas.style.willChange = 'transform';
 
     container.appendChild(vid);
     container.appendChild(canvas);
@@ -321,14 +322,16 @@ document.addEventListener('DOMContentLoaded', () => {
     ).name('📋 Log values');
 
     const resize = () => {
-      const w = container.clientWidth || container.offsetWidth;
-      const h = container.clientHeight || container.offsetHeight || window.innerHeight;
+      const w = container.offsetWidth;
+      const h = container.offsetHeight;
+      if (!w || !h) return;
       renderer.setSize(w, h);
       mat.uniforms.uAspect.value = w / h;
     };
 
     resize();
-    window.addEventListener('resize', resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(container);
 
     const animate = t => {
       requestAnimationFrame(animate);
