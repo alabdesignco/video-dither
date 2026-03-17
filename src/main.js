@@ -346,12 +346,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const animate = t => {
       requestAnimationFrame(animate);
       if (!visible) return;
+      syncCanvas();
       if (perf.targetFps) {
         const minDelta = 1000 / perf.targetFps;
         if (t - renderLast < minDelta) return;
         renderLast = t - ((t - renderLast) % minDelta);
       }
-      syncCanvas();
       const dt = lastRenderT ? (t - lastRenderT) / 1000 : 0;
       lastRenderT = t;
       const time = t * 0.001;
