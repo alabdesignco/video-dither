@@ -317,10 +317,12 @@ document.addEventListener('DOMContentLoaded', () => {
       'log'
     ).name('📋 Log values');
 
+    let lastW = 0, lastH = 0;
     const resize = () => {
       const w = container.offsetWidth;
       const h = container.offsetHeight;
-      if (!w || !h) return;
+      if (!w || !h || (w === lastW && h === lastH)) return;
+      lastW = w; lastH = h;
       renderer.setSize(w, h, false);
       mat.uniforms.uAspect.value = w / h;
     };
