@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(vid);
     container.appendChild(canvas);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
     const scene = new THREE.Scene();
