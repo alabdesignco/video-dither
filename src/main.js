@@ -19,15 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     vid.crossOrigin = 'anonymous';
     vid.src = defaultVideo;
 
-    container.style.overflow = 'hidden';
     vid.style.display = 'none';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.display = 'block';
-    canvas.style.willChange = 'transform';
+    canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;display:none;';
 
     container.appendChild(vid);
-    container.appendChild(canvas);
+    document.body.appendChild(canvas);
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -309,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     fC.addColor(params, 'colorLight').name('Background').onChange(v => {
       mat.uniforms.uColorLight.value.set(v);
-      container.style.background = v;
     });
 
     gui.add(
@@ -321,13 +316,28 @@ document.addEventListener('DOMContentLoaded', () => {
       'log'
     ).name('📋 Log values');
 
+    const syncCanvas = () => {
+      const r = container.getBoundingClientRect();
+      canvas.style.width = r.width + 'px';
+      canvas.style.height = r.height + 'px';
+      canvas.style.transform = `translate(${r.left}px,${r.top}px)`;
+    };
+
     const resize = () => {
       const w = container.offsetWidth;
       const h = container.offsetHeight;
       if (!w || !h) return;
-      renderer.setSize(w, h);
+      renderer.setSize(w, h, false);
       mat.uniforms.uAspect.value = w / h;
+      syncCanvas();
     };
+
+    let visible = false;
+    const io = new IntersectionObserver(entries => {
+      visible = entries[0].isIntersecting;
+      canvas.style.display = visible ? 'block' : 'none';
+    }, { threshold: 0 });
+    io.observe(container);
 
     resize();
     const ro = new ResizeObserver(resize);
@@ -335,11 +345,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const animate = t => {
       requestAnimationFrame(animate);
+      if (!visible) return;
       if (perf.targetFps) {
         const minDelta = 1000 / perf.targetFps;
         if (t - renderLast < minDelta) return;
         renderLast = t - ((t - renderLast) % minDelta);
       }
+      syncCanvas();
       const dt = lastRenderT ? (t - lastRenderT) / 1000 : 0;
       lastRenderT = t;
       const time = t * 0.001;
