@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     vid.src = defaultVideo;
 
     vid.style.display = 'none';
-    canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;display:none;';
+    canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;display:block;';
 
     container.appendChild(vid);
     document.body.appendChild(canvas);
@@ -332,10 +332,9 @@ document.addEventListener('DOMContentLoaded', () => {
       syncCanvas();
     };
 
-    let visible = false;
+    let visible = true;
     const io = new IntersectionObserver(entries => {
       visible = entries[0].isIntersecting;
-      canvas.style.display = visible ? 'block' : 'none';
     }, { threshold: 0 });
     io.observe(container);
 
